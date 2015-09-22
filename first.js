@@ -1,6 +1,8 @@
 var http = require('http'),
       fs = require('fs'),
-    path = require('path');
+    path = require('path'),
+  crypto = require('crypto'),
+      qs = require('querystring');
 
 var port = 8080;
 
@@ -8,14 +10,39 @@ var authenticatedSessions = {};
 
 var users = {
     'admin': {
-        passwordhash: '',
-        email: 'admin@localhost.com'
+        passwordhash: '3d1a9d2a76114707',
+        email: 'smencer@gmail.com'
+    }
+};
+
+
+var authenticationHelper = {
+    algorithm: 'aes-256-ctr',
+    salt: 'salty',
+    encrypt: function(text){
+        var cipher = crypto.createCipher(this.algorithm, this.salt)
+        var crypted = cipher.update(text, 'utf8', 'hex')
+        crypted += cipher.final('hex');
+        return crypted;
+    },
+    decrypt: function(text){
+        var decipher = crypto.createDecipher(this.algorithm, this.salt)
+        var dec = decipher.update(text, 'hex', 'utf8')
+        dec += decipher.final('utf8');
+        return dec;
     }
 };
 
 var templateHelper = {
     renderTemplate: function(template, model){
-        
+        for(var property in model){
+            if(model.hasOwnProperty(property)){
+                var re = new RegExp('{{\\s*' + property + '\\s*}}', 'g');
+                template = template.replace(re, model[property]);
+            }
+        }
+
+        return template;
     }
 };
 
@@ -75,34 +102,91 @@ responseHelper = {
     },
     sendHtml: function(route, model, response){
         var filePath = templates[route];
-        var stat = fs.statSync(filePath);
 
         response.writeHead(200, {
-            'Content-Type': 'text/html',
-            'Content-Length': stat.size
+            'Content-Type': 'text/html'
         });
 
-        var fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(response);
+        var fileContents = fs.readFileSync(filePath, 'utf8');
+        var rendered = templateHelper.renderTemplate(fileContents, model);
+        response.end(rendered);
     }
 };
 
 router.registerRoute('GET', '/login', function(route, request, response){
     var message = {
         body: 'POST to this endpoint to login (include user and password in POST body).',
+        error: ''
     };
     responseHelper.send(route, message, request, response);
 });
 
 router.registerRoute('POST', '/login', function(route, request, response){
-    // check credentials
-    var message = {};
-    responseHelper.send(route, message, request, response);
+    var body = '';
+
+    request.on('data', function(data){
+        body += data;
+    });
+
+    request.on('end', function(){
+        var postBody = qs.parse(body);
+
+        if(users.hasOwnProperty(postBody.user)){
+            var passwordHash = authenticationHelper.encrypt(postBody.password);
+            if(users[postBody.user].passwordhash === passwordHash){
+                var message = {
+                    username: postBody.user,
+                    token: authenticationHelper.encrypt(new Date().toISOString())
+                }
+
+                if(authenticatedSessions.hasOwnProperty(message.username)){
+                    responseHelper.send(route, {error: 'Already logged in'}, request, response);
+                } else {
+                    var expiration = new Date();
+                    var minutes = expiration.getMinutes() + 20;
+                    expiration.setMinutes(minutes);
+                    authenticatedSessions[message.token] = expiration;
+                    console.log(expiration.toLocaleString());
+                    responseHelper.send(route, message, request, response);
+                }
+            } else {
+                var errorMessage = {
+                    error: 'Unknown user or wrong password'
+                }
+                responseHelper.send(router.getRouteKey('GET', '/login'), errorMessage, request, response);
+            }
+        } else {
+            var errorMessage = {
+                error: 'Unknown user or wrong password'
+            }
+            responseHelper.send(router.getRouteKey('GET', '/login'), errorMessage, request, response);
+        }
+    });
 });
 
 router.registerRoute('POST', '/logout', function(route, request, response){
-    var message = {};
-    responseHelper.send(route, message, request, response);
+    var body = '';
+
+    request.on('data', function(data){
+        body += data;
+    });
+
+    request.on('end', function(){
+        var postBody = qs.parse(body);
+
+        if(authenticatedSessions.hasOwnProperty(postBody.token)){
+            var message = {
+                message: 'Log out operation complete',
+            }
+            delete authenticatedSessions[postBody.token];
+            responseHelper.send(route, message, request, response);
+        } else {
+            var errorMessage = {
+                error: 'Unable to locate authenticated session'
+            }
+            responseHelper.send(router.getRouteKey('GET', '/login'), errorMessage, request, response);
+        }
+    });
 });
 
 var handleRequest = function(request, response){
