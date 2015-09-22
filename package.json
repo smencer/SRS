@@ -1,0 +1,11 @@
+{
+  "name": "SRS",
+  "version": "0.0.1",
+  "description": "Simple Rest Service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "smencer@gmail.com",
+  "license": "ISC"
+}
