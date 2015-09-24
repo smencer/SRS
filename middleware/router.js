@@ -10,7 +10,6 @@ var router = {
     },
     registerRoute: function(method, url, handler){
         this.routes[this.getRouteKey(method, url)] = handler;
-        this.templates[this.getRouteKey(method, url)] = template;
     },
     buildRoute: function(request){
         return this.getRouteKey(request.method, request.url);
@@ -30,7 +29,6 @@ var router = {
     execute: function(request, response){
         var route = this.checkForMatch(request);
         console.log('Responding with [' + route + ']');
-        console.log(this.routes);
         this.routes[route](route, request, response);
     }
 };
