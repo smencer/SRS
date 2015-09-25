@@ -1,6 +1,9 @@
 # vim swp files
 *.swp
 
+# data files
+configStore.json
+
 # Logs
 logs
 *.log
