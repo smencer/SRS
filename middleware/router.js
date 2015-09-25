@@ -1,3 +1,5 @@
+var urlLib = require('url');
+
 var router = {
     templates: {
     },
@@ -12,12 +14,16 @@ var router = {
         this.routes[this.getRouteKey(method, url)] = handler;
     },
     buildRoute: function(request){
-        return this.getRouteKey(request.method, request.url);
+        var parsed = urlLib.parse(request.url);
+        return this.getRouteKey(request.method, parsed.pathname);
     },
     getRouteKey: function(method, url){
         return method + ':' + url;
     },
     checkForMatch: function(request){
+        console.log(request.url);
+
+
         var template = this.buildRoute(request);
         console.log('Requested [' + template + ']');
         if(this.routes.hasOwnProperty(template)){
