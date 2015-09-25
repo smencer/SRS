@@ -34,7 +34,7 @@ var authRoutes = {
             var parsed = url.parse(request.url);
             var query = qs.parse(parsed.query);
 
-            var result = configStore.fetchModel(query.name);
+            var result = configStore.fetchModel(query);
 
             responseHelper.send(route, result, request, response);
         });
