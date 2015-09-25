@@ -38,11 +38,17 @@ Operation: GET
 URL(s):
 
 /config?token=<auth token>
+
 /config?sort=<name|port|username>&token=<auth token> //sorted by a property
+
 /config?start=<start index>&token=<auth token> //get from a starting index, using default pageSize
+
 /config?start=<start index>&pageSize=<page size>&token=<auth token> //get from a starting index, using specific pageSize
+
 /config?sort=<name|port|username>&token=<auth token> //sorted by a property
+
 /config?sort=<name|port|username>&start=<start index>&token=<auth token> //sort by property, then get from a starting index, using default pageSize
+
 /config?sort=<name|port|username>&start=<start index>&pageSize=<page size>&token=<auth token> //sort by property, then get from a starting index, using specific pageSize
 
 Description: Returns a list of objects from the data store with optional sort and paging
