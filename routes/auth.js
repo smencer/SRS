@@ -3,11 +3,11 @@ var authenticationHelper = require('../util/authenticationHelper'),
                    users = require('../services/userStore'),
           responseHelper = require('../util/responseHelper');
 
-var session;
+var sessionStore;
 
 var authRoutes = {
     init: function(router, session){
-        session = session;
+        sessionStore = session;
 
         router.registerRoute('GET', '/login', function(route, request, response){
             var message = {
@@ -35,7 +35,7 @@ var authRoutes = {
                             token: authenticationHelper.encrypt(new Date().toISOString())
                         }
 
-                        session.createSession(message.token);
+                        sessionStore.createSession(message.token, message.username);
 
                         responseHelper.send(route, message, request, response);
                     } else {
@@ -63,7 +63,7 @@ var authRoutes = {
             request.on('end', function(){
                 var postBody = qs.parse(body);
         
-                if(session.endSession(postBody.token)){
+                if(sessionStore.endSession(postBody.token)){
                     var message = {
                         message: 'Log out operation complete',
                     }

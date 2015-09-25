@@ -6,13 +6,9 @@ function getPaged(values, start, pageSize){
     var start = parseInt(start);
     if(pageSize){
         var pageSize = parseInt(pageSize);
-        console.log('using pageSize: ' + pageSize);
         values = values.slice(start, start + pageSize);
-        console.log('local array size after slice: ' + values.length);
     } else {
-        console.log('using pageSize: ' + defaultPageSize);
-        values = values.slice(query.start, start + defaultPageSize);
-        console.log('local array size after slice: ' + values.length);
+        values = values.slice(start, start + defaultPageSize);
     }
 
     return values;
@@ -27,7 +23,6 @@ var configStore = {
                 tempInternalIndex[record.name] = index;
             });
             this._internalIndex = tempInternalIndex;
-            console.log(this._internalIndex);
             console.log('Loaded configStore.json from disk, initialized with ' + this._internalStore.length + ' config records');
         } catch (e) {
             console.log(e.message);

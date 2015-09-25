@@ -3,15 +3,26 @@ var responseHelper = require('../util/responseHelper'),
                url = require('url');
        configStore = require('../services/configStore');
 
-var session;
+var sessionStore;
+function validateRequest(route, request, response){
+    var parsed = url.parse(request.url);
+    var query = qs.parse(parsed.query);
 
-var authRoutes = {
+    if(!sessionStore.keepSessionAlive(query.token)) {
+        response.writeHeader(401, {'Content-Type': 'application/json'});
+        responseHelper.send(route, {message: 'Not authorized'}, request, response);
+    }
+}
+
+var configRoutes = {
     init: function(router, session){
-        session = session;
+        sessionStore = session;
         configStore.init();
 
         // Create
         router.registerRoute('POST', '/config', function(route, request, response){
+            validateRequest(route, request, response);
+
             var body = '';
         
             request.on('data', function(data){
@@ -31,6 +42,8 @@ var authRoutes = {
         
         // Retrieve
         router.registerRoute('GET', '/config', function(route, request, response){
+            validateRequest(route, request, response);
+
             var parsed = url.parse(request.url);
             var query = qs.parse(parsed.query);
 
@@ -41,6 +54,8 @@ var authRoutes = {
 
         // Update
         router.registerRoute('PUT', '/config', function(route, request, response){
+            validateRequest(route, request, response);
+
             var parsed = url.parse(request.url);
             var query = qs.parse(parsed.query);
 
@@ -75,6 +90,8 @@ var authRoutes = {
         
         // Delete
         router.registerRoute('DELETE', '/config', function(route, request, response){
+            validateRequest(route, request, response);
+
             var parsed = url.parse(request.url);
             var query = qs.parse(parsed.query);
 
@@ -96,4 +113,4 @@ var authRoutes = {
     }
 };
 
-module.exports = authRoutes;
+module.exports = configRoutes;
